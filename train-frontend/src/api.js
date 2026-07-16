@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_BASE_URL = 'https://r03hnzj4-5000.inc1.devtunnels.ms/api';
+export const API_BASE_URL = 'https://train-scraper.onrender.com/api';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
