@@ -7,7 +7,7 @@ const api = axios.create({
 });
 
 // Silently wake the Render backend on app load (free tier sleeps after inactivity)
-fetch(`${API_BASE_URL}/health`).catch(() => {});
+fetch('https://train-scraper.onrender.com/health').catch(() => {});
 
 // Interceptor to attach JWT
 api.interceptors.request.use((config) => {
