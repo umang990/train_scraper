@@ -6,6 +6,9 @@ const api = axios.create({
     baseURL: API_BASE_URL,
 });
 
+// Silently wake the Render backend on app load (free tier sleeps after inactivity)
+fetch(`${API_BASE_URL}/health`).catch(() => {});
+
 // Interceptor to attach JWT
 api.interceptors.request.use((config) => {
     const storedUser = localStorage.getItem('user');

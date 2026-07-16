@@ -5,9 +5,18 @@ const cors = require('cors');
 
 const app = express();
 
-// Middleware
+// CORS — allow all origins explicitly
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 app.use(express.json());
-app.use(cors());
+
+// Health check — keeps Render from sleeping & lets frontend ping to wake it
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
+
 
 // Database connection
 const connectDB = async () => {
