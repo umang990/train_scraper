@@ -14,39 +14,14 @@ app.use(cors({
 
 app.use(express.json());
 
-// Health check — keeps Render from sleeping & lets frontend ping to wake it
-app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
-
-
-// Database connection
-const connectDB = async () => {
-    try {
-        await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/traindb');
-        console.log('MongoDB Connected...');
-    } catch (err) {
-        console.error(err.message);
-        process.exit(1);
-    }
-};
-
-connectDB();
-
-// Process-level error handling to prevent crashes
-process.on('uncaughtException', (err) => {
-    console.error('UNCAUGHT EXCEPTION! 💥 Shutting down gracefully...');
-    console.error(err.name, err.message, err.stack);
-    process.exit(1);
-});
-
-process.on('unhandledRejection', (err) => {
-    console.error('UNHANDLED REJECTION! 💥 Keeping server alive but please fix...');
-    console.error(err.name, err.message, err.stack);
-});
-
-// Request logging middleware
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    next();
+// Health check — keeps Render alive & lets frontend ping to wake it
+app.get('/health', (req, res) => {
+    const dbState = mongoose.connection.readyState;
+    // 0=disconnected, 1=connected, 2=connecting, 3=disconnecting
+    res.status(200).json({
+        status: 'ok',
+        db: dbState === 1 ? 'connected' : 'connecting'
+    });
 });
 
 // Routes
@@ -73,6 +48,51 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Request logging
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
 const PORT = process.env.PORT || 5000;
 
+// ── Start server FIRST so Render gets a live port immediately ──────────────
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+
+// ── Connect to MongoDB in the background with retries ─────────────────────
+const connectDB = async () => {
+    const uri = process.env.MONGO_URI;
+    if (!uri) {
+        console.error('[DB] MONGO_URI env variable is not set! Routes needing DB will fail.');
+        return;
+    }
+    const maxRetries = 5;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            await mongoose.connect(uri);
+            console.log('[DB] MongoDB Connected');
+            return;
+        } catch (err) {
+            console.error(`[DB] Connection attempt ${attempt}/${maxRetries} failed: ${err.message}`);
+            if (attempt < maxRetries) {
+                const wait = attempt * 3000; // 3s, 6s, 9s, 12s
+                console.log(`[DB] Retrying in ${wait / 1000}s...`);
+                await new Promise(r => setTimeout(r, wait));
+            } else {
+                console.error('[DB] All connection attempts failed. Server is running but DB is unavailable.');
+            }
+        }
+    }
+};
+
+connectDB();
+
+// Process-level error guards — never crash the process
+process.on('uncaughtException', (err) => {
+    console.error('[CRASH] uncaughtException:', err.message, err.stack);
+});
+
+process.on('unhandledRejection', (err) => {
+    console.error('[CRASH] unhandledRejection:', err?.message || err);
+});
+
