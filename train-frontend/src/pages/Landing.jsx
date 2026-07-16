@@ -129,8 +129,8 @@ const Landing = () => {
 
                 {/* Search Form */}
                 <div className="animate-fade-up" style={{ animationDelay: '0.5s' }}>
-                    <form onSubmit={handleSearch} className="mt-10 bg-white border border-[#E4E7EC] rounded-xl p-1 flex flex-col md:flex-row items-stretch md:items-center gap-1 max-w-3xl shadow-sm">
-                        <div className="flex-1 min-w-0">
+                    <form onSubmit={handleSearch} className="mt-10 bg-white border border-[#E4E7EC] rounded-xl p-1 flex flex-col md:flex-row items-stretch md:items-center gap-1 max-w-3xl shadow-sm overflow-visible">
+                        <div className="flex-1 min-w-0 overflow-visible">
                             <StationAutocomplete
                                 value={searchParams.source}
                                 onChange={(val) => setSearchParams({ ...searchParams, source: val })}
@@ -141,7 +141,7 @@ const Landing = () => {
 
                         <div className="hidden md:block w-px h-8 bg-[#E4E7EC] flex-shrink-0" />
 
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 overflow-visible">
                             <StationAutocomplete
                                 value={searchParams.destination}
                                 onChange={(val) => setSearchParams({ ...searchParams, destination: val })}

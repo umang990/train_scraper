@@ -132,10 +132,14 @@ const Dashboard = () => {
                 {/* Page Header */}
                 <div className="mb-5 animate-fade-up">
                     <h1 className="text-xl font-bold text-gray-900">
-                        {trainData ? `${trainData.searchContext.sourceStationName} → ${trainData.searchContext.destinationStationName}` : 'Loading trains...'}
+                        {trainData
+                            ? `${trainData.searchContext?.sourceStationName || sourceParam} → ${trainData.searchContext?.destinationStationName || destParam}`
+                            : 'Loading trains...'}
                     </h1>
                     <p className="text-sm text-gray-400 mt-0.5">
-                        {trainData ? `${trainData.searchContext.totalTrainsFound} trains found · ${trainData.searchContext.sourceStationCode} to ${trainData.searchContext.destinationStationCode}` : 'Fetching schedules...'}
+                        {trainData
+                            ? `${trainData.searchContext?.totalTrainsFound ?? processedTrains.length} trains found · ${trainData.searchContext?.sourceStationCode || sourceParam} to ${trainData.searchContext?.destinationStationCode || destParam}`
+                            : 'Fetching schedules...'}
                     </p>
                 </div>
 
