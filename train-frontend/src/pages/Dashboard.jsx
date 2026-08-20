@@ -58,8 +58,8 @@ const Dashboard = () => {
                     if (entry.date) map[entry.date] = entry.status;
                 });
                 setCalendarData(map);
-            } catch (_) {
-                // silently fail — date strip just shows no status
+            } catch (err) {
+                console.error('[Calendar] fetch failed:', err?.response?.data || err.message);
             }
         };
         fetchCalendar();

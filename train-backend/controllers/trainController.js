@@ -242,29 +242,46 @@ const getAvailabilityCalendar = async (req, res) => {
     try {
         const raw = await fetchAvailabilityCalendar(source, destination, startDate, days || 15);
 
-        if (!raw || !raw.data) {
-            return res.status(404).json({ message: 'No calendar data found' });
+        // Log the raw response so we can see its structure in Render logs
+        console.log('[Calendar] raw response keys:', raw ? Object.keys(raw) : 'null');
+        console.log('[Calendar] raw.data type:', raw?.data ? (Array.isArray(raw.data) ? `array(${raw.data.length})` : typeof raw.data) : 'missing');
+        if (raw?.data) console.log('[Calendar] first entry sample:', JSON.stringify(Array.isArray(raw.data) ? raw.data[0] : raw.data).slice(0, 300));
+
+        if (!raw) {
+            return res.json({ calendar: [] });
         }
 
-        // Map the response to simple { date, status } objects for the date strip
-        const calendar = (raw.data || []).map(entry => {
-            const avail = (entry.availability || entry.status || '').toUpperCase();
-            let status = 'No Data';
-            if (avail.includes('AVAILABLE') || avail.includes('AVL') || avail.includes('CURR_AV')) {
-                status = 'Available';
-            } else if (avail.includes('RAC')) {
-                status = 'RAC';
-            } else if (avail.includes('WL') || avail.includes('WAIT')) {
-                status = 'Waitlist';
-            } else if (avail.includes('REGRET') || avail.includes('NOT')) {
-                status = 'Full';
-            }
-            return {
-                date: entry.date || entry.journeyDate,
-                status,
-                raw: avail
-            };
-        });
+        // Handle multiple possible response shapes from ConfirmTkt
+        let entries = [];
+        if (Array.isArray(raw.data)) {
+            entries = raw.data;
+        } else if (raw.data?.calendarList) {
+            entries = raw.data.calendarList;
+        } else if (raw.data?.trainCalendarList) {
+            entries = raw.data.trainCalendarList;
+        } else if (Array.isArray(raw)) {
+            entries = raw;
+        } else if (raw.data && typeof raw.data === 'object') {
+            // Maybe it's a date-keyed object: { "20-08-2026": { availability: "..." } }
+            entries = Object.entries(raw.data).map(([date, val]) => ({ date, ...val }));
+        }
+
+        const parseStatus = (avail = '') => {
+            const a = avail.toUpperCase();
+            if (a.includes('AVAILABLE') || a.includes('AVL') || a.includes('CURR_AV')) return 'Available';
+            if (a.includes('RAC')) return 'RAC';
+            if (a.includes('WL') || a.includes('WAIT')) return 'Waitlist';
+            if (a.includes('REGRET') || a.includes('NOT')) return 'Full';
+            return a || 'No Data';
+        };
+
+        const calendar = entries.map(entry => ({
+            date: entry.date || entry.journeyDate || entry.travelDate,
+            status: parseStatus(entry.availability || entry.status || entry.availabilityStatus || ''),
+            raw: entry.availability || entry.status || ''
+        }));
+
+        console.log('[Calendar] parsed', calendar.length, 'entries, sample:', JSON.stringify(calendar[0]));
 
         res.json({ calendar });
     } catch (error) {
