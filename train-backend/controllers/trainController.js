@@ -1,4 +1,4 @@
-const { searchTrains, fetchTrainSchedule, fetchLiveAvailability, humanDelay } = require('../services/confirmTktService');
+const { searchTrains, fetchTrainSchedule, fetchLiveAvailability, fetchAvailabilityCalendar, humanDelay } = require('../services/confirmTktService');
 
 // @desc    Get trains data (Master search + Schedules + optional Live Availability)
 // @route   GET /api/trains
@@ -228,8 +228,54 @@ const optimizeTrainStream = async (req, res) => {
     }
 };
 
+
+// @desc    Get 15-day availability calendar for a route (date strip status labels)
+// @route   GET /api/trains/calendar
+// @access  Private
+const getAvailabilityCalendar = async (req, res) => {
+    const { source, destination, startDate, days } = req.query;
+
+    if (!source || !destination || !startDate) {
+        return res.status(400).json({ message: 'Missing required query parameters: source, destination, startDate' });
+    }
+
+    try {
+        const raw = await fetchAvailabilityCalendar(source, destination, startDate, days || 15);
+
+        if (!raw || !raw.data) {
+            return res.status(404).json({ message: 'No calendar data found' });
+        }
+
+        // Map the response to simple { date, status } objects for the date strip
+        const calendar = (raw.data || []).map(entry => {
+            const avail = (entry.availability || entry.status || '').toUpperCase();
+            let status = 'No Data';
+            if (avail.includes('AVAILABLE') || avail.includes('AVL') || avail.includes('CURR_AV')) {
+                status = 'Available';
+            } else if (avail.includes('RAC')) {
+                status = 'RAC';
+            } else if (avail.includes('WL') || avail.includes('WAIT')) {
+                status = 'Waitlist';
+            } else if (avail.includes('REGRET') || avail.includes('NOT')) {
+                status = 'Full';
+            }
+            return {
+                date: entry.date || entry.journeyDate,
+                status,
+                raw: avail
+            };
+        });
+
+        res.json({ calendar });
+    } catch (error) {
+        console.error('API Route Error [getAvailabilityCalendar]:', error);
+        res.status(500).json({ message: 'Server Error fetching calendar', error: error.message });
+    }
+};
+
 module.exports = {
     getTrainsData,
     getTrainSchedule,
-    optimizeTrainStream
+    optimizeTrainStream,
+    getAvailabilityCalendar
 };

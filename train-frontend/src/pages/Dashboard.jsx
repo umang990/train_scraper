@@ -16,6 +16,7 @@ const Dashboard = () => {
     const [trainData, setTrainData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [calendarData, setCalendarData] = useState({});  // { 'DD-MM-YYYY': 'Available' | 'RAC' | ... }
 
     const [sortBy, setSortBy] = useState('departure_early');
     const [filterClass, setFilterClass] = useState([]);
@@ -32,17 +33,37 @@ const Dashboard = () => {
         const [d, m, y] = dateParam.split('-');
         let baseDate = new Date(`${y}-${m}-${d}`);
         if (isNaN(baseDate.getTime())) baseDate = new Date();
-        return Array.from({ length: 6 }).map((_, i) => {
+        return Array.from({ length: 15 }).map((_, i) => {
             const dt = new Date(baseDate);
             dt.setDate(baseDate.getDate() + i);
+            const full = `${dt.getDate().toString().padStart(2, '0')}-${(dt.getMonth() + 1).toString().padStart(2, '0')}-${dt.getFullYear()}`;
             return {
                 day: dt.toLocaleDateString('en-US', { weekday: 'short' }),
                 date: dt.getDate().toString().padStart(2, '0'),
-                full: `${dt.getDate().toString().padStart(2, '0')}-${(dt.getMonth() + 1).toString().padStart(2, '0')}-${dt.getFullYear()}`,
-                status: i % 3 === 0 ? 'Few Seats' : 'Filling',
+                full,
+                status: calendarData[full] || '',
             };
         });
-    }, [dateParam]);
+    }, [dateParam, calendarData]);
+
+    // Fetch real 15-day availability calendar
+    useEffect(() => {
+        const fetchCalendar = async () => {
+            try {
+                const res = await api.get('/trains/calendar', {
+                    params: { source: sourceParam, destination: destParam, startDate: dateParam, days: 15 }
+                });
+                const map = {};
+                (res.data?.calendar || []).forEach(entry => {
+                    if (entry.date) map[entry.date] = entry.status;
+                });
+                setCalendarData(map);
+            } catch (_) {
+                // silently fail — date strip just shows no status
+            }
+        };
+        fetchCalendar();
+    }, [sourceParam, destParam, dateParam]);
 
     const [selectedDate, setSelectedDate] = useState(dates[0].full);
 
@@ -164,14 +185,22 @@ const Dashboard = () => {
                             {/* Date tabs */}
                             <div className="flex border-b border-[#E4E7EC] rounded-t-xl">
                                 <div className="flex-1 flex overflow-x-auto hide-scrollbar">
-                                    {dates.map((d, i) => (
-                                        <button key={i} onClick={() => setSelectedDate(d.full)}
-                                            className={`flex-shrink-0 flex flex-col items-center px-5 py-3 text-center border-r border-[#E4E7EC] transition-colors ${selectedDate === d.full ? 'bg-gray-900 text-white' : 'hover:bg-[#F7F8FA] text-gray-600'}`}>
-                                            <span className={`text-xs font-medium ${selectedDate === d.full ? 'text-gray-300' : 'text-gray-400'}`}>{d.day}</span>
-                                            <span className={`text-sm font-semibold mt-0.5 ${selectedDate === d.full ? 'text-white' : 'text-gray-900'}`}>{d.date}</span>
-                                            <span className={`text-[10px] mt-0.5 ${selectedDate === d.full ? 'text-gray-400' : 'text-gray-400'}`}>{d.status}</span>
-                                        </button>
-                                    ))}
+                                    {dates.map((d, i) => {
+                                        const statusColor = selectedDate === d.full
+                                            ? 'text-gray-400'
+                                            : d.status === 'Available' ? 'text-green-500'
+                                            : d.status === 'RAC' ? 'text-amber-500'
+                                            : d.status === 'Waitlist' || d.status === 'Full' ? 'text-red-400'
+                                            : 'text-gray-400';
+                                        return (
+                                            <button key={i} onClick={() => setSelectedDate(d.full)}
+                                                className={`flex-shrink-0 flex flex-col items-center px-5 py-3 text-center border-r border-[#E4E7EC] transition-colors ${selectedDate === d.full ? 'bg-gray-900 text-white' : 'hover:bg-[#F7F8FA] text-gray-600'}`}>
+                                                <span className={`text-xs font-medium ${selectedDate === d.full ? 'text-gray-300' : 'text-gray-400'}`}>{d.day}</span>
+                                                <span className={`text-sm font-semibold mt-0.5 ${selectedDate === d.full ? 'text-white' : 'text-gray-900'}`}>{d.date}</span>
+                                                <span className={`text-[10px] mt-0.5 font-medium ${statusColor}`}>{d.status || '—'}</span>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                                 <div className="flex items-center px-4 bg-[#F7F8FA] min-w-[140px] border-l border-[#E4E7EC] rounded-tr-xl">
                                     <CardDatePicker value={selectedDate} onChange={newDate => { if (newDate) { const url = new URL(window.location.href); url.searchParams.set('date', newDate); window.history.pushState({}, '', url); setSelectedDate(newDate); } }} placeholder="Pick date" />
