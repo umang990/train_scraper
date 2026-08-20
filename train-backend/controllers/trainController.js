@@ -251,37 +251,24 @@ const getAvailabilityCalendar = async (req, res) => {
             return res.json({ calendar: [] });
         }
 
-        // Handle multiple possible response shapes from ConfirmTkt
-        let entries = [];
-        if (Array.isArray(raw.data)) {
-            entries = raw.data;
-        } else if (raw.data?.calendarList) {
-            entries = raw.data.calendarList;
-        } else if (raw.data?.trainCalendarList) {
-            entries = raw.data.trainCalendarList;
-        } else if (Array.isArray(raw)) {
-            entries = raw;
-        } else if (raw.data && typeof raw.data === 'object') {
-            // Maybe it's a date-keyed object: { "20-08-2026": { availability: "..." } }
-            entries = Object.entries(raw.data).map(([date, val]) => ({ date, ...val }));
-        }
+        // Actual ConfirmTkt response: { data: { availability: [{ date, state }] } }
+        const entries = raw.data?.availability || [];
 
-        const parseStatus = (avail = '') => {
-            const a = avail.toUpperCase();
-            if (a.includes('AVAILABLE') || a.includes('AVL') || a.includes('CURR_AV')) return 'Available';
-            if (a.includes('RAC')) return 'RAC';
-            if (a.includes('WL') || a.includes('WAIT')) return 'Waitlist';
-            if (a.includes('REGRET') || a.includes('NOT')) return 'Full';
-            return a || 'No Data';
+        const stateLabel = (state = '') => {
+            switch (state) {
+                case 'Available':    return 'Available';
+                case 'FillingFast':  return 'Filling Fast';
+                case 'FewSeats':     return 'Few Seats';
+                case 'Unknown':      return '';
+                default:             return state || '';
+            }
         };
 
         const calendar = entries.map(entry => ({
-            date: entry.date || entry.journeyDate || entry.travelDate,
-            status: parseStatus(entry.availability || entry.status || entry.availabilityStatus || ''),
-            raw: entry.availability || entry.status || ''
+            date: entry.date,
+            status: stateLabel(entry.state),
+            raw: entry.state || ''
         }));
-
-        console.log('[Calendar] parsed', calendar.length, 'entries, sample:', JSON.stringify(calendar[0]));
 
         res.json({ calendar });
     } catch (error) {

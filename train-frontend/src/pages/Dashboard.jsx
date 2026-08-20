@@ -188,9 +188,9 @@ const Dashboard = () => {
                                     {dates.map((d, i) => {
                                         const statusColor = selectedDate === d.full
                                             ? 'text-gray-400'
-                                            : d.status === 'Available' ? 'text-green-500'
-                                            : d.status === 'RAC' ? 'text-amber-500'
-                                            : d.status === 'Waitlist' || d.status === 'Full' ? 'text-red-400'
+                                            : d.status === 'Available'     ? 'text-green-500'
+                                            : d.status === 'Few Seats'     ? 'text-red-400'
+                                            : d.status === 'Filling Fast'  ? 'text-amber-500'
                                             : 'text-gray-400';
                                         return (
                                             <button key={i} onClick={() => setSelectedDate(d.full)}
