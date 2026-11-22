@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import AvailabilityBadge from './AvailabilityBadge';
+import React, { useState, useMemo } from 'react';
+import AvailabilityBadge, { TRAIN_BG_IMAGES } from './AvailabilityBadge';
 import OptimizationModal from './OptimizationModal';
 import api from '../api';
 import useInView from '../hooks/useInView';
@@ -13,6 +13,16 @@ const TrainCard = ({ trainObj, date, source, destination, index = 0, chatMode = 
     const [routeError, setRouteError] = useState('');
 
     const [selectedAiClass, setSelectedAiClass] = useState(null);
+
+    // Shuffle 7 blurred train images for the class cards in this train
+    const shuffledBgs = useMemo(() => {
+        const list = [...TRAIN_BG_IMAGES];
+        for (let i = list.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [list[i], list[j]] = [list[j], list[i]];
+        }
+        return list;
+    }, []);
 
     const { ref, inView } = useInView();
 
@@ -105,11 +115,12 @@ const TrainCard = ({ trainObj, date, source, destination, index = 0, chatMode = 
                     <div className="border-t border-[#F2F4F7] mt-3 pt-3">
                         <span className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2 block">Classes</span>
                         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
-                            {Object.entries(availability).map(([cls, data]) => (
+                            {Object.entries(availability).map(([cls, data], idx) => (
                                 <div key={cls} className="availability-badge-click">
                                     <AvailabilityBadge
                                         travelClass={cls}
                                         data={data}
+                                        bgImage={shuffledBgs[idx % shuffledBgs.length]}
                                         onOptimize={() => {
                                             if (chatMode && onClassClick) {
                                                 onClassClick(trainInfo, cls);
