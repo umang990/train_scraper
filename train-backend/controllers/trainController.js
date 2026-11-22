@@ -201,22 +201,36 @@ const optimizeTrainStream = async (req, res) => {
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
+        res.setHeader('X-Accel-Buffering', 'no');
+        if (typeof res.flushHeaders === 'function') {
+            res.flushHeaders();
+        }
+
+        // Handle client disconnect gracefully
+        let clientDisconnected = false;
+        req.on('close', () => {
+            clientDisconnected = true;
+        });
 
         // Classes may be a string if one, or array if multiple
         const classesArray = Array.isArray(travelClasses) ? travelClasses : travelClasses.split(',');
 
         const onProgress = (completed, total, message) => {
+            if (clientDisconnected) return;
             res.write(`data: ${JSON.stringify({ type: 'progress', completed, total, message })}\n\n`);
         };
 
         const onResult = (result) => {
+            if (clientDisconnected) return;
             res.write(`data: ${JSON.stringify({ type: 'result', data: result })}\n\n`);
         };
 
         await optimizeTrainRouteStream(trainNumber, source, destination, date, classesArray, rawSched.Schedule, mode || 'QUOTA', onProgress, onResult);
         
-        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-        res.end();
+        if (!clientDisconnected) {
+            res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+            res.end();
+        }
     } catch (error) {
         console.error('API Route Error [optimizeTrainStream]:', error);
         if (!res.headersSent) {

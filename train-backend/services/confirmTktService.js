@@ -1,9 +1,9 @@
 const axios = require('axios');
 
 const USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36"
 ];
 
 const getRandomAgent = () => USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
@@ -13,24 +13,46 @@ const humanDelay = (minSeconds = 0.0, maxSeconds = 0.05) => {
     return new Promise(resolve => setTimeout(resolve, delay * 1000));
 };
 
-// Shared ct-web headers — call as a function so env vars are read at request time
-const getWebHeaders = () => ({
+// Shared ct-mweb headers matching ConfirmTkt mweb API specs
+const getMwebHeaders = () => ({
     'Accept': '*/*',
     'Accept-Language': 'en-US,en-IN;q=0.9,en-GB;q=0.8,en;q=0.7,hi;q=0.6',
-    'ApiKey': process.env.CT_API_KEY_WEB,
-    'CT-Token': process.env.CT_TOKEN,
-    'CT-Userkey': process.env.CT_USERKEY,
-    'ClientId': 'ct-web',
+    'ApiKey': process.env.CT_API_KEY_MWEB || 'ct-mweb!2$',
+    'CT-Token': process.env.CT_TOKEN_MWEB || process.env.CT_TOKEN || '2744E8A32688D8479A85CC9D2CECFE4982D39E89DF2C13E5FDCF66911F3E23E6',
+    'CT-Userkey': process.env.CT_USERKEY || '65D4C34794A1EF8924C3A214322311E1CFDDA9135B671AA9CE29DD2947F6B63C',
+    'ClientId': 'ct-mweb',
     'Connection': 'keep-alive',
     'Content-Type': 'application/json',
-    'DeviceId': process.env.CT_DEVICE_ID,
+    'DeviceId': process.env.CT_DEVICE_ID_MWEB || process.env.CT_DEVICE_ID || '94c0c329-4ed0-45f9-9c34-9c41af741b66',
     'Origin': 'https://www.confirmtkt.com',
     'Referer': 'https://www.confirmtkt.com/',
     'Sec-Fetch-Dest': 'empty',
     'Sec-Fetch-Mode': 'cors',
     'Sec-Fetch-Site': 'same-site',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36',
-    'sec-ch-ua': '"Not=A?Brand";v="99", "Google Chrome";v="151", "Chromium";v="151"',
+    'User-Agent': getRandomAgent(),
+    'sec-ch-ua': '"Chromium";v="158", "Not.A/Brand";v="24", "Google Chrome";v="158"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+});
+
+// Shared ct-web headers — fallback so env vars are read at request time
+const getWebHeaders = () => ({
+    'Accept': '*/*',
+    'Accept-Language': 'en-US,en-IN;q=0.9,en-GB;q=0.8,en;q=0.7,hi;q=0.6',
+    'ApiKey': process.env.CT_API_KEY_WEB || 'ct-web!2$',
+    'CT-Token': process.env.CT_TOKEN || '2744E8A32688D8479A85CC9D2CECFE4982D39E89DF2C13E5FDCF66911F3E23E6',
+    'CT-Userkey': process.env.CT_USERKEY || '65D4C34794A1EF8924C3A214322311E1CFDDA9135B671AA9CE29DD2947F6B63C',
+    'ClientId': 'ct-web',
+    'Connection': 'keep-alive',
+    'Content-Type': 'application/json',
+    'DeviceId': process.env.CT_DEVICE_ID || '94c0c329-4ed0-45f9-9c34-9c41af741b66',
+    'Origin': 'https://www.confirmtkt.com',
+    'Referer': 'https://www.confirmtkt.com/',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'same-site',
+    'User-Agent': getRandomAgent(),
+    'sec-ch-ua': '"Chromium";v="158", "Not.A/Brand";v="24", "Google Chrome";v="158"',
     'sec-ch-ua-mobile': '?0',
     'sec-ch-ua-platform': '"Windows"',
 });
@@ -59,30 +81,9 @@ const searchTrains = async (source, destination, date) => {
         'showNewAltText': 'true',
     };
 
-    const headers = {
-        'Accept': '*/*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'ApiKey': process.env.CT_API_KEY_MWEB,
-        'CT-Token': process.env.CT_TOKEN_MWEB,
-        'CT-Userkey': process.env.CT_USERKEY,
-        'ClientId': 'ct-mweb',
-        'Connection': 'keep-alive',
-        'Content-Type': 'application/json',
-        'DeviceId': process.env.CT_DEVICE_ID_MWEB,
-        'Origin': 'https://www.confirmtkt.com',
-        'Referer': 'https://www.confirmtkt.com/',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-site',
-        'User-Agent': getRandomAgent(),
-        'sec-ch-ua': '"Not=A?Brand";v="99", "Google Chrome";v="151", "Chromium";v="151"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-    };
-
     try {
-        await humanDelay(0.0, 0.1);
-        const response = await apiClient.get(url, { params, headers });
+        await humanDelay(0.0, 0.05);
+        const response = await apiClient.get(url, { params, headers: getMwebHeaders() });
         return response.data?.data?.trainList || [];
     } catch (error) {
         console.error('Error searching trains:', error.message);
@@ -90,8 +91,21 @@ const searchTrains = async (source, destination, date) => {
     }
 };
 
-// ─── Fetch Train Schedule (HTML scrape) ──────────────────────────────────────
+// ─── Fetch Train Schedule ───────────────────────────────────────────────────
 const fetchTrainSchedule = async (trainNumber) => {
+    // Primary: ConfirmTkt Official API endpoint
+    const apiUrl = `https://cttrainsapi.confirmtkt.com/api/v1/trains/schedule?trainNo=${trainNumber}`;
+    try {
+        await humanDelay(0.0, 0.05);
+        const response = await apiClient.get(apiUrl, { headers: getMwebHeaders() });
+        if (response.data && response.data.Schedule) {
+            return response.data;
+        }
+    } catch (apiError) {
+        console.warn(`API schedule fetch failed for ${trainNumber} (${apiError.message}), falling back to HTML scrape...`);
+    }
+
+    // Fallback: Web scrape (in case API is unavailable)
     const url = `https://www.confirmtkt.com/train-running-status/${trainNumber}`;
     const headers = { 'User-Agent': getRandomAgent() };
 
@@ -131,16 +145,22 @@ const fetchLiveAvailability = async (trainNumber, travelClass, source, destinati
     };
 
     try {
-        await humanDelay(0.0, 0.1);
-        const response = await apiClient.post(url, null, { params, headers: getWebHeaders() });
-        return response.data;
+        await humanDelay(0.0, 0.05);
+        // Try web headers first, fallback to mweb headers
+        let response;
+        try {
+            response = await apiClient.post(url, null, { params, headers: getWebHeaders() });
+        } catch (e) {
+            response = await apiClient.post(url, null, { params, headers: getMwebHeaders() });
+        }
+        return response?.data || null;
     } catch (error) {
         return null;
     }
 };
 
-// ─── Fetch Availability Calendar (15-day date strip) ─────────────────────────
-const fetchAvailabilityCalendar = async (source, destination, startDate, days = 15) => {
+// ─── Fetch Availability Calendar (14/15-day date strip) ─────────────────────────
+const fetchAvailabilityCalendar = async (source, destination, startDate, days = 14) => {
     const url = 'https://cttrainsapi.confirmtkt.com/api/v1/availability/availabilityCalender';
 
     const params = {
@@ -151,8 +171,8 @@ const fetchAvailabilityCalendar = async (source, destination, startDate, days = 
     };
 
     try {
-        await humanDelay(0.0, 0.1);
-        const response = await apiClient.get(url, { params, headers: getWebHeaders() });
+        await humanDelay(0.0, 0.05);
+        const response = await apiClient.get(url, { params, headers: getMwebHeaders() });
         return response.data;
     } catch (error) {
         console.error('Error fetching availability calendar:', error.message);
