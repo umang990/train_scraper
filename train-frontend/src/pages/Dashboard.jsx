@@ -24,7 +24,7 @@ const Dashboard = () => {
     const [filterDepartureBlock, setFilterDepartureBlock] = useState([]);
     const [filterArrivalBlock, setFilterArrivalBlock] = useState([]);
     const [quickAcOnly, setQuickAcOnly] = useState(false);
-    const [quickAvailable, setQuickAvailable] = useState(true);
+    const [quickAvailable, setQuickAvailable] = useState(false);
     const [quota, setQuota] = useState('GN');
     const [isFiltersOpen, setIsFiltersOpen] = useState(false);
     const [activeMainTab, setActiveMainTab] = useState('direct');

@@ -170,7 +170,7 @@ const optimizeTrainRouteStream = async (trainNumber, source, destination, date, 
 
     const totalTasks = executableTasks.length;
     let completed = 0;
-    const poolLimit = 15;
+    const poolLimit = 25;
     
     // If Quota mode finds an AVAILABLE ticket, it sets this to true so we can abort the current outward layer if needed
     let foundPerfectTicket = false;

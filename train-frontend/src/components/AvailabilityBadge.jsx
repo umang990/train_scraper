@@ -1,73 +1,47 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
-export const TRAIN_BG_IMAGES = [
-    '/train_bg/train_blur_1.jpg',
-    '/train_bg/train_blur_2.jpg',
-    '/train_bg/train_blur_3.jpg',
-    '/train_bg/train_blur_4.jpg',
-    '/train_bg/train_blur_5.jpg',
-    '/train_bg/train_blur_6.jpg',
-    '/train_bg/train_blur_7.jpg',
-];
-
-const AvailabilityBadge = ({ travelClass, data, onOptimize, bgImage }) => {
+const AvailabilityBadge = ({ travelClass, data, onOptimize }) => {
     const { status, seats, fare } = data;
     const statusUpper = (status || '').toUpperCase();
 
-    // Fallback shuffled background if not supplied by parent
-    const cardBg = bgImage || useMemo(() => {
-        return TRAIN_BG_IMAGES[Math.floor(Math.random() * TRAIN_BG_IMAGES.length)];
-    }, []);
-
-    let statusBadgeClass = 'text-[10px] font-semibold text-gray-700 bg-white/95 px-2 py-0.5 rounded-full border border-gray-200 shadow-xs';
+    let statusBadgeClass = 'text-[10px] font-medium text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-200';
     let statusLabel = status || 'N/A';
-    let dotColor = 'bg-gray-400';
+    let dotColor = 'bg-gray-300';
     let dotExtra = '';
 
     if (statusUpper.includes('AVAILABLE') || statusUpper.includes('CURR_AV') || statusUpper.includes('AVL')) {
-        statusBadgeClass = 'text-[10px] font-semibold text-green-800 bg-green-50/95 px-2 py-0.5 rounded-full border border-green-200 shadow-xs';
+        statusBadgeClass = 'text-[10px] font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200';
         dotColor = 'bg-green-500';
         dotExtra = 'dot-available';
     } else if (statusUpper.includes('RAC')) {
-        statusBadgeClass = 'text-[10px] font-semibold text-amber-800 bg-amber-50/95 px-2 py-0.5 rounded-full border border-amber-200 shadow-xs';
+        statusBadgeClass = 'text-[10px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200';
         dotColor = 'bg-amber-500';
     } else if (statusUpper.includes('WL') || statusUpper.includes('WAIT') || statusUpper.includes('REGRET') || statusUpper.includes('NOT')) {
-        statusBadgeClass = 'text-[10px] font-semibold text-red-800 bg-red-50/95 px-2 py-0.5 rounded-full border border-red-200 shadow-xs';
+        statusBadgeClass = 'text-[10px] font-medium text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-200';
         dotColor = 'bg-red-500';
     }
 
     const isBookable = statusUpper.includes('AVAILABLE') || statusUpper.includes('RAC') || statusUpper.includes('CURR_AV') || statusUpper.includes('WL');
 
     return (
-        <div className="relative overflow-hidden border border-[#E4E7EC] rounded-xl p-3 bg-white flex flex-col gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-gray-300 animate-fade-up group">
-            {/* Aesthetic Train Background — medium zoomed & slightly decreased blur */}
-            <div
-                className="absolute inset-0 bg-cover bg-center filter blur-[5px] scale-110 pointer-events-none opacity-90 group-hover:opacity-100 transition-all duration-300"
-                style={{ backgroundImage: `url(${cardBg})` }}
-            />
-            {/* Soft translucent gradient */}
-            <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/35 to-white/65 pointer-events-none" />
-
-            {/* Foreground Content */}
-            <div className="relative z-10 flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-gray-900 tracking-wide drop-shadow-2xs">{travelClass}</span>
-                    <span className={`w-2 h-2 rounded-full ${dotColor} ${dotExtra}`} />
-                </div>
-                <div className="text-base font-extrabold text-gray-900 tracking-tight drop-shadow-2xs">{fare ? `₹${fare}` : '—'}</div>
-                <div className="flex items-center justify-between gap-1">
-                    <span className={statusBadgeClass}>{statusLabel}</span>
-                    {seats && <span className="text-[10px] text-gray-700 font-semibold bg-white/90 px-1.5 py-0.5 rounded shadow-2xs">{seats}</span>}
-                </div>
-                {isBookable && onOptimize && (
-                    <button
-                        onClick={() => onOptimize(travelClass)}
-                        className="w-full bg-white/95 hover:bg-gray-900 hover:text-white border border-gray-900 text-gray-900 text-xs font-semibold py-1.5 rounded-lg active:scale-95 transition-all duration-150 mt-1 shadow-xs"
-                    >
-                        Check Quota
-                    </button>
-                )}
+        <div className="border border-[#E4E7EC] rounded-lg p-3 bg-white flex flex-col gap-2 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-sm hover:border-gray-300 animate-fade-up">
+            <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-gray-900">{travelClass}</span>
+                <span className={`w-2 h-2 rounded-full ${dotColor} ${dotExtra}`} />
             </div>
+            <div className="text-base font-bold text-gray-900">{fare ? `₹${fare}` : '—'}</div>
+            <div className="flex items-center justify-between gap-1">
+                <span className={statusBadgeClass}>{statusLabel}</span>
+                {seats && <span className="text-[10px] text-gray-400">{seats}</span>}
+            </div>
+            {isBookable && onOptimize && (
+                <button
+                    onClick={() => onOptimize(travelClass)}
+                    className="w-full border border-gray-900 text-gray-900 text-xs font-medium py-1.5 rounded-md hover:bg-gray-900 hover:text-white active:scale-95 transition-all duration-150 mt-1"
+                >
+                    Check Quota
+                </button>
+            )}
         </div>
     );
 };

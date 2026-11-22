@@ -30,14 +30,12 @@ const Login = () => {
     const [serverError, setServerError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     
-    const redirectUrl = searchParams.get('redirect') || '/search';
+    const redirectUrl = searchParams.get('redirect') || '/';
 
     const onSubmit = async (data) => {
         setIsLoading(true);
         setServerError('');
         
-        // Artificial delay for UX
-        const startTime = Date.now();
         let apiError = null;
         let response = null;
 
@@ -57,18 +55,13 @@ const Login = () => {
             }
         }
 
-        const elapsedTime = Date.now() - startTime;
-        const delay = Math.max(0, 2000 - elapsedTime);
-
-        setTimeout(() => {
-            setIsLoading(false);
-            if (apiError) {
-                setServerError(apiError.response?.data?.message || 'Login failed');
-            } else if (response) {
-                login(response.data);
-                navigate(redirectUrl, { replace: true });
-            }
-        }, delay);
+        setIsLoading(false);
+        if (apiError) {
+            setServerError(apiError.response?.data?.message || 'Login failed');
+        } else if (response) {
+            login(response.data);
+            navigate(redirectUrl, { replace: true });
+        }
     };
 
     if (isLoading) {

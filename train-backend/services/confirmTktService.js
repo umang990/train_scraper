@@ -8,10 +8,8 @@ const USER_AGENTS = [
 
 const getRandomAgent = () => USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 
-const humanDelay = (minSeconds = 0.0, maxSeconds = 0.05) => {
-    const delay = Math.random() * (maxSeconds - minSeconds) + minSeconds;
-    return new Promise(resolve => setTimeout(resolve, delay * 1000));
-};
+// No artificial delay for maximum responsiveness
+const humanDelay = () => Promise.resolve();
 
 // Shared ct-mweb headers matching ConfirmTkt mweb API specs
 const getMwebHeaders = () => ({
@@ -57,7 +55,7 @@ const getWebHeaders = () => ({
     'sec-ch-ua-platform': '"Windows"',
 });
 
-const apiClient = axios.create();
+const apiClient = axios.create({ timeout: 5000 });
 
 // ─── Search Trains ────────────────────────────────────────────────────────────
 const searchTrains = async (source, destination, date) => {
@@ -82,7 +80,6 @@ const searchTrains = async (source, destination, date) => {
     };
 
     try {
-        await humanDelay(0.0, 0.05);
         const response = await apiClient.get(url, { params, headers: getMwebHeaders() });
         return response.data?.data?.trainList || [];
     } catch (error) {
@@ -96,7 +93,6 @@ const fetchTrainSchedule = async (trainNumber) => {
     // Primary: ConfirmTkt Official API endpoint
     const apiUrl = `https://cttrainsapi.confirmtkt.com/api/v1/trains/schedule?trainNo=${trainNumber}`;
     try {
-        await humanDelay(0.0, 0.05);
         const response = await apiClient.get(apiUrl, { headers: getMwebHeaders() });
         if (response.data && response.data.Schedule) {
             return response.data;
@@ -145,14 +141,7 @@ const fetchLiveAvailability = async (trainNumber, travelClass, source, destinati
     };
 
     try {
-        await humanDelay(0.0, 0.05);
-        // Try web headers first, fallback to mweb headers
-        let response;
-        try {
-            response = await apiClient.post(url, null, { params, headers: getWebHeaders() });
-        } catch (e) {
-            response = await apiClient.post(url, null, { params, headers: getMwebHeaders() });
-        }
+        const response = await apiClient.post(url, null, { params, headers: getMwebHeaders() });
         return response?.data || null;
     } catch (error) {
         return null;
@@ -171,7 +160,6 @@ const fetchAvailabilityCalendar = async (source, destination, startDate, days = 
     };
 
     try {
-        await humanDelay(0.0, 0.05);
         const response = await apiClient.get(url, { params, headers: getMwebHeaders() });
         return response.data;
     } catch (error) {
