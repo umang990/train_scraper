@@ -40,9 +40,9 @@ const AvailabilityBadge = ({ travelClass, data, onOptimize, bgImage }) => {
 
     return (
         <div className="relative overflow-hidden border border-[#E4E7EC] rounded-xl p-3 bg-white flex flex-col gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-gray-300 animate-fade-up group">
-            {/* Aesthetic Train Background — the blurriest smooth glowing bokeh */}
+            {/* Aesthetic Train Background — medium zoomed & slightly decreased blur */}
             <div
-                className="absolute inset-0 bg-cover bg-center filter blur-[6px] scale-115 pointer-events-none opacity-90 group-hover:opacity-100 transition-opacity duration-300"
+                className="absolute inset-0 bg-cover bg-center filter blur-[5px] scale-110 pointer-events-none opacity-90 group-hover:opacity-100 transition-all duration-300"
                 style={{ backgroundImage: `url(${cardBg})` }}
             />
             {/* Soft translucent gradient */}
